@@ -15,10 +15,17 @@
 
   "supplybeam.debug.spawned": "[调试] %s 光柱已刷新于 x=%d, z=%d",
 
+  "supplybeam.notice.spawn": "一道%s出现在附近（x=%d, z=%d），循着光柱去找吧！",
+
+  "supplybeam.reason.bad_ground": "落点不是干燥地面（水面/悬空）",
+  "supplybeam.reason.below_min_surface": "地表高度低于下限",
+  "supplybeam.reason.no_clearance": "上方净空不足（屋檐/洞穴顶）",
+  "supplybeam.reason.beam_too_tall": "地表过高，完整光柱放不下",
+
   "supplybeam.command.spawned": "已生成补给光柱：%s",
   "supplybeam.command.cleared": "已清除 %s 根补给光柱",
   "supplybeam.command.unknown_rarity": "未知稀有度：%s（可选 common/uncommon/rare/epic/mythic）",
-  "supplybeam.command.bad_spot": "选址无效：光柱需要落在干燥实心、上方三格净空的地表上",
+  "supplybeam.command.bad_spot": "选址无效：%s（已尝试目标点及附近 15 个备选点）",
 
   "supplybeam.command.info": "运行状态：全服活跃 %s 根（当前维度 %s 根）｜下次自然刷新约 %s 秒后｜调试模式：%s",
   "supplybeam.command.debug_on": "开启",
@@ -64,6 +71,9 @@
   "supplybeam.config.spawn.spawnRadiusMax.tooltip": "生成点距随机玩家的最大水平距离",
   "supplybeam.config.spawn.minSurfaceY": "最低地表高度",
   "supplybeam.config.spawn.minSurfaceY.tooltip": "地表高度低于此值不生成（排除海底/深湖）",
+
+  "supplybeam.config.spawn.noticeEnabled": "刷新文字提示",
+  "supplybeam.config.spawn.noticeEnabled.tooltip": "光柱自然刷新时向全服发送带坐标的文字提示；关闭后需要自己留意地平线",
 
   "supplybeam.config.beam.beamHeightMin": "光柱高度下限（格）",
   "supplybeam.config.beam.beamHeightMin.tooltip": "光柱顶端距地表的最小高度（格）",

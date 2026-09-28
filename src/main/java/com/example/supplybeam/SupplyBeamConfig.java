@@ -32,6 +32,8 @@ public final class SupplyBeamConfig {
     public static final ModConfigSpec.IntValue SPAWN_RADIUS_MAX;
     public static final ModConfigSpec.IntValue MIN_SURFACE_Y;
 
+    public static final ModConfigSpec.BooleanValue NOTICE_ENABLED;
+
     public static final ModConfigSpec.IntValue BEAM_HEIGHT_MIN;
     public static final ModConfigSpec.IntValue BEAM_HEIGHT_MAX;
     public static final ModConfigSpec.IntValue BEAM_GROWTH_SECONDS;
@@ -97,6 +99,9 @@ public final class SupplyBeamConfig {
         MIN_SURFACE_Y = builder
             .comment("地表高度低于此值不生成（排除海底/深湖）")
             .defineInRange("minSurfaceY", 63, -64, 320);
+        NOTICE_ENABLED = builder
+            .comment("光柱自然刷新时向全服发送带坐标的文字提示（关闭后需要自己留意地平线）")
+            .define("noticeEnabled", true);
         builder.pop();
 
         builder.comment("光柱形态").push("beam");
@@ -149,6 +154,7 @@ public final class SupplyBeamConfig {
         entry("spawn.spawnRadiusMin", SPAWN_RADIUS_MIN, ValueType.INT, 16, 4096);
         entry("spawn.spawnRadiusMax", SPAWN_RADIUS_MAX, ValueType.INT, 32, 8192);
         entry("spawn.minSurfaceY", MIN_SURFACE_Y, ValueType.INT, -64, 320);
+        entry("spawn.noticeEnabled", NOTICE_ENABLED, ValueType.BOOLEAN, 0, 0);
         entry("beam.beamHeightMin", BEAM_HEIGHT_MIN, ValueType.INT, 24, 512);
         entry("beam.beamHeightMax", BEAM_HEIGHT_MAX, ValueType.INT, 32, 512);
         entry("beam.beamGrowthSeconds", BEAM_GROWTH_SECONDS, ValueType.INT, 1, 600);

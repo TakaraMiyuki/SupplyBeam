@@ -266,12 +266,14 @@ public final class SupplyBeamCommand {
 
     private static int finishSpawn(CommandContext<CommandSourceStack> ctx, ServerLevel level, int bx, int bz,
                                    SupplyRarity rarity) {
-        if (BeamManager.spawnAt(level, bx, bz, rarity)) {
+        String reason = BeamManager.spawnNear(level, bx, bz, rarity, 12);
+        if (reason == null) {
             ctx.getSource().sendSuccess(() -> Component.translatable("supplybeam.command.spawned",
                 Component.translatable(rarity.translationKey()).withStyle(rarity.formatting())), true);
             return 1;
         }
-        ctx.getSource().sendFailure(Component.translatable("supplybeam.command.bad_spot"));
+        ctx.getSource().sendFailure(Component.translatable("supplybeam.command.bad_spot",
+            Component.translatable(reason)));
         return 0;
     }
 

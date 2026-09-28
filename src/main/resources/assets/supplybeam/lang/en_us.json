@@ -15,10 +15,17 @@
 
   "supplybeam.debug.spawned": "[Debug] %s beam spawned at x=%d, z=%d",
 
+  "supplybeam.notice.spawn": "A %s beam has appeared nearby (x=%d, z=%d) - follow the light!",
+
+  "supplybeam.reason.bad_ground": "spot is not dry ground (water/overhang)",
+  "supplybeam.reason.below_min_surface": "surface below minimum height",
+  "supplybeam.reason.no_clearance": "not enough clearance above (roof/cave ceiling)",
+  "supplybeam.reason.beam_too_tall": "surface too high for a full beam",
+
   "supplybeam.command.spawned": "Supply beam spawned: %s",
   "supplybeam.command.cleared": "Cleared %s supply beam(s)",
   "supplybeam.command.unknown_rarity": "Unknown rarity: %s (common/uncommon/rare/epic/mythic)",
-  "supplybeam.command.bad_spot": "Invalid spot: the beam needs solid dry ground with 3 blocks of clearance",
+  "supplybeam.command.bad_spot": "Invalid spot: %s (tried the target and 15 nearby fallbacks)",
 
   "supplybeam.command.info": "Status: %s active globally (%s in this dimension) | next spawn in ~%ss | debug: %s",
   "supplybeam.command.debug_on": "ON",
@@ -64,6 +71,9 @@
   "supplybeam.config.spawn.spawnRadiusMax.tooltip": "Maximum horizontal distance from a random player",
   "supplybeam.config.spawn.minSurfaceY": "Min surface height",
   "supplybeam.config.spawn.minSurfaceY.tooltip": "Beams never spawn where the surface is below this height (excludes oceans/deep lakes)",
+
+  "supplybeam.config.spawn.noticeEnabled": "Spawn notice",
+  "supplybeam.config.spawn.noticeEnabled.tooltip": "Send a chat notice with coordinates to everyone when a beam spawns naturally; turn off to rely on spotting the beam yourself",
 
   "supplybeam.config.beam.beamHeightMin": "Beam height min (blocks)",
   "supplybeam.config.beam.beamHeightMin.tooltip": "Minimum beam-top height above the surface",
