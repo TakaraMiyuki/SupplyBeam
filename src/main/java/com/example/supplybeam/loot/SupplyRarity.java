@@ -4,23 +4,23 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.util.RandomSource;
 
 /**
- * 补给稀有度：绿 → 蓝 → 紫 → 红 → 金（灵感来自方舟的空投颜色）。
+ * 补给稀有度，四档：罕见（绿）→ 稀有（蓝）→ 史诗（紫）→ 传奇（红）。
  * 刷新权重与光柱颜色由配置文件控制（SupplyBeamConfig），此处保留
- * 默认颜色（配置解析失败时回退）、名称、着色与开箱条数。
+ * 默认颜色（配置解析失败时回退）、名称、着色与独立模式开箱条数。
+ * 与 Manhunt 联动时，ordinal 正好对应其资源抽奖奖池档位（0~3）。
  */
 public enum SupplyRarity {
-    COMMON(0x3AE86B, ChatFormatting.GREEN, 4, "common"),
-    UNCOMMON(0x3AB8FF, ChatFormatting.AQUA, 6, "uncommon"),
-    RARE(0xB45BFF, ChatFormatting.LIGHT_PURPLE, 8, "rare"),
-    EPIC(0xFF4A5E, ChatFormatting.RED, 10, "epic"),
-    MYTHIC(0xFFC845, ChatFormatting.GOLD, 12, "mythic");
+    UNCOMMON(0x3AE86B, ChatFormatting.GREEN, 4, "uncommon"),
+    RARE(0x3AB8FF, ChatFormatting.AQUA, 6, "rare"),
+    EPIC(0xB45BFF, ChatFormatting.LIGHT_PURPLE, 8, "epic"),
+    LEGENDARY(0xFF4A5E, ChatFormatting.RED, 10, "legendary");
 
     public static final SupplyRarity[] VALUES = values();
 
     /** 配置缺失/非法时的回退色（0xRRGGBB）。 */
     private final int defaultColor;
     private final ChatFormatting formatting;
-    /** 开箱结算条数。 */
+    /** 独立模式开箱结算条数（Manhunt 联动时由其奖池流程决定）。 */
     private final int rolls;
     private final String id;
 
@@ -59,7 +59,7 @@ public enum SupplyRarity {
             total += Math.max(0, w);
         }
         if (total <= 0) {
-            return COMMON;
+            return UNCOMMON;
         }
         int roll = random.nextInt(total);
         for (int i = 0; i < weights.length; i++) {
@@ -68,7 +68,7 @@ public enum SupplyRarity {
                 return VALUES[i];
             }
         }
-        return MYTHIC;
+        return LEGENDARY;
     }
 
     /** 按字符串 id 解析（指令用），不区分大小写。 */

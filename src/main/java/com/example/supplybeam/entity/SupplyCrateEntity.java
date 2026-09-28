@@ -1,6 +1,7 @@
 package com.example.supplybeam.entity;
 
 import com.example.supplybeam.SupplyBeamConfig;
+import com.example.supplybeam.compat.ManhuntBridge;
 import com.example.supplybeam.loot.SupplyLoot;
 import com.example.supplybeam.loot.SupplyRarity;
 import net.minecraft.ChatFormatting;
@@ -89,7 +90,7 @@ public class SupplyCrateEntity extends Entity {
         builder.define(DATA_GROUND_Y, (float) getY());
         builder.define(DATA_TOP_Y, (float) getY() + 147.0f);
         builder.define(DATA_PHASE_TICK, 0);
-        builder.define(DATA_COLOR, SupplyRarity.COMMON.defaultColor());
+        builder.define(DATA_COLOR, SupplyRarity.UNCOMMON.defaultColor());
         builder.define(DATA_GROWTH_TICKS, 400);
     }
 
@@ -297,13 +298,18 @@ public class SupplyCrateEntity extends Entity {
     }
 
     private void collect(ServerLevel server, ServerPlayer player) {
-        List<ItemStack> loot = SupplyLoot.rollLoot(rarity(), server.registryAccess());
-        for (ItemStack stack : loot) {
-            double ox = (RNG.nextDouble() - 0.5) * 2.0;
-            double oz = (RNG.nextDouble() - 0.5) * 2.0;
-            ItemEntity item = new ItemEntity(server, getX() + ox, getY() + 1.0, getZ() + oz, stack);
-            item.setPickUpDelay(8);
-            server.addFreshEntity(item);
+        if (ManhuntBridge.lotteryAvailable() && ManhuntBridge.rollLottery(player, rarity().ordinal())) {
+            // Manhunt 联动：触发对应档位的资源抽奖（老虎机动画 + 待领取），不掉落实物
+        } else {
+            // 独立模式：直接撒落自身奖池战利品
+            List<ItemStack> loot = SupplyLoot.rollLoot(rarity(), server.registryAccess());
+            for (ItemStack stack : loot) {
+                double ox = (RNG.nextDouble() - 0.5) * 2.0;
+                double oz = (RNG.nextDouble() - 0.5) * 2.0;
+                ItemEntity item = new ItemEntity(server, getX() + ox, getY() + 1.0, getZ() + oz, stack);
+                item.setPickUpDelay(8);
+                server.addFreshEntity(item);
+            }
         }
         level().playSound(null, blockPosition(), SoundEvents.PLAYER_LEVELUP,
             SoundSource.NEUTRAL, 0.9f, 1.0f);

@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 空投奖池：五档稀有度各自的加权物品池，开箱时按档位条数结算。
- * 物品与权重在此调整；参照方舟的定位，档位越高越靠近"毕业物资"，
- * 神话档低概率开出鞘翅，与 Manhunt 的四档里程奖池互补而不重复。
+ * 空投奖池：四档稀有度各自的加权物品池（独立模式开箱时按档位条数结算）。
+ * 安装 Manhunt 时开箱改为触发对应档位的资源抽奖，本奖池作为无 Manhunt 时的独立奖池。
+ * 物品与权重在此调整；档位越高越靠近"毕业物资"，传奇档低概率开出鞘翅。
  */
 public final class SupplyLoot {
     private SupplyLoot() {}
@@ -69,8 +69,8 @@ public final class SupplyLoot {
         }
     }
 
-    // ==================== 常规补给（绿）：生存基础物资 ====================
-    private static final List<Entry> COMMON_POOL = List.of(
+    // ==================== 罕见补给（绿，档1）：生存基础物资 ====================
+    private static final List<Entry> UNCOMMON_POOL = List.of(
         new Simple(Items.BREAD, 2, 4, 6), new Simple(Items.COOKED_BEEF, 2, 3, 5),
         new Simple(Items.BAKED_POTATO, 3, 6, 3), new Simple(Items.TORCH, 8, 16, 5),
         new Simple(Items.IRON_INGOT, 2, 4, 5), new Simple(Items.COAL, 4, 8, 4),
@@ -80,8 +80,8 @@ public final class SupplyLoot {
         new Simple(Items.IRON_AXE, 1, 1, 1), new Simple(Items.CAMPFIRE, 1, 1, 1)
     );
 
-    // ==================== 稀有补给（蓝）：成型的装备与资源 ====================
-    private static final List<Entry> UNCOMMON_POOL = List.of(
+    // ==================== 稀有补给（蓝，档2）：成型的装备与资源 ====================
+    private static final List<Entry> RARE_POOL = List.of(
         new Simple(Items.GOLD_INGOT, 2, 5, 5), new Simple(Items.ARROW, 16, 32, 3),
         new Simple(Items.IRON_CHESTPLATE, 1, 1, 2), new Simple(Items.IRON_HELMET, 1, 1, 2),
         new Simple(Items.IRON_LEGGINGS, 1, 1, 2), new Simple(Items.IRON_BOOTS, 1, 1, 2),
@@ -93,8 +93,8 @@ public final class SupplyLoot {
         new Book(1, 2)
     );
 
-    // ==================== 史诗补给（紫）：钻石级跃迁 ====================
-    private static final List<Entry> RARE_POOL = List.of(
+    // ==================== 史诗补给（紫，档3）：钻石级跃迁 ====================
+    private static final List<Entry> EPIC_POOL = List.of(
         new Simple(Items.DIAMOND, 1, 3, 5), new Simple(Items.GOLDEN_APPLE, 1, 2, 4),
         new Simple(Items.ENDER_PEARL, 2, 4, 3), new Simple(Items.EMERALD, 2, 5, 3),
         new Simple(Items.GOLD_BLOCK, 1, 2, 2), new Simple(Items.NAME_TAG, 1, 1, 2),
@@ -104,30 +104,25 @@ public final class SupplyLoot {
         new Book(3, 3)
     );
 
-    // ==================== 传说补给（红）：下界合金入门 ====================
-    private static final List<Entry> EPIC_POOL = List.of(
+    // ==================== 传奇补给（红，档4）：下界合金与毕业物资 ====================
+    private static final List<Entry> LEGENDARY_POOL = List.of(
         new Simple(Items.NETHERITE_SCRAP, 1, 2, 3), new Simple(Items.NETHERITE_INGOT, 1, 1, 1),
         new Simple(Items.ENCHANTED_GOLDEN_APPLE, 1, 1, 2), new Simple(Items.TOTEM_OF_UNDYING, 1, 1, 2),
         new Simple(Items.DIAMOND_BLOCK, 1, 2, 2), new Simple(Items.TRIDENT, 1, 1, 1),
         new Enchanted(Items.DIAMOND_SWORD, 2, 5), new Enchanted(Items.DIAMOND_CHESTPLATE, 2, 5),
         new Enchanted(Items.DIAMOND_PICKAXE, 1, 5), new Enchanted(Items.DIAMOND_BOOTS, 1, 5),
-        new Book(3, 5)
-    );
-
-    // ==================== 神话补给（金）：毕业物资，低概率鞘翅 ====================
-    private static final List<Entry> MYTHIC_POOL = List.of(
-        new Simple(Items.ELYTRA, 1, 1, 1), new Simple(Items.NETHERITE_INGOT, 1, 2, 3),
-        new Simple(Items.TOTEM_OF_UNDYING, 2, 2, 2), new Simple(Items.ENCHANTED_GOLDEN_APPLE, 2, 2, 2),
-        new Simple(Items.BEACON, 1, 1, 1), new Simple(Items.SHULKER_BOX, 1, 1, 1),
-        new Simple(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1, 2, 2),
-        new Simple(Items.END_CRYSTAL, 1, 1, 1),
+        new Book(3, 5),
+        // 原神话档精华并入传奇：毕业物资以更低权重出现
+        new Simple(Items.ELYTRA, 1, 1, 1), new Simple(Items.NETHERITE_INGOT, 1, 1, 2),
+        new Simple(Items.TOTEM_OF_UNDYING, 1, 1, 2), new Simple(Items.BEACON, 1, 1, 1),
+        new Simple(Items.SHULKER_BOX, 1, 1, 1),
+        new Simple(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE, 1, 1, 2),
         new Enchanted(Items.NETHERITE_SWORD, 1, 5), new Enchanted(Items.NETHERITE_CHESTPLATE, 1, 5),
-        new Enchanted(Items.NETHERITE_PICKAXE, 1, 5),
         new Book(2, 255)
     );
 
     private static final List<List<Entry>> POOLS = List.of(
-        COMMON_POOL, UNCOMMON_POOL, RARE_POOL, EPIC_POOL, MYTHIC_POOL);
+        UNCOMMON_POOL, RARE_POOL, EPIC_POOL, LEGENDARY_POOL);
 
     /** 按稀有度开箱：条数由 {@link SupplyRarity#rolls()} 决定。 */
     public static List<ItemStack> rollLoot(SupplyRarity rarity, HolderLookup.Provider registries) {

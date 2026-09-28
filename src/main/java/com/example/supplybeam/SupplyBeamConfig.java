@@ -41,17 +41,15 @@ public final class SupplyBeamConfig {
     public static final ModConfigSpec.DoubleValue DESCEND_SPEED_BLOCKS_PER_SECOND;
     public static final ModConfigSpec.IntValue GROUND_LIFETIME_SECONDS;
 
-    public static final ModConfigSpec.IntValue WEIGHT_COMMON;
     public static final ModConfigSpec.IntValue WEIGHT_UNCOMMON;
     public static final ModConfigSpec.IntValue WEIGHT_RARE;
     public static final ModConfigSpec.IntValue WEIGHT_EPIC;
-    public static final ModConfigSpec.IntValue WEIGHT_MYTHIC;
+    public static final ModConfigSpec.IntValue WEIGHT_LEGENDARY;
 
-    public static final ModConfigSpec.ConfigValue<String> COLOR_COMMON;
     public static final ModConfigSpec.ConfigValue<String> COLOR_UNCOMMON;
     public static final ModConfigSpec.ConfigValue<String> COLOR_RARE;
     public static final ModConfigSpec.ConfigValue<String> COLOR_EPIC;
-    public static final ModConfigSpec.ConfigValue<String> COLOR_MYTHIC;
+    public static final ModConfigSpec.ConfigValue<String> COLOR_LEGENDARY;
 
     public static final ModConfigSpec.BooleanValue DEBUG_MODE;
 
@@ -125,17 +123,15 @@ public final class SupplyBeamConfig {
             .defineInRange("groundLifetimeSeconds", 300, 10, 86400);
         builder.pop();
 
-        builder.comment("稀有度：刷新权重与光柱颜色").push("rarity");
-        WEIGHT_COMMON = builder.comment("常规补给（绿）刷新权重").defineInRange("weightCommon", 46, 0, 10000);
-        WEIGHT_UNCOMMON = builder.comment("稀有补给（蓝）刷新权重").defineInRange("weightUncommon", 27, 0, 10000);
-        WEIGHT_RARE = builder.comment("史诗补给（紫）刷新权重").defineInRange("weightRare", 15, 0, 10000);
-        WEIGHT_EPIC = builder.comment("传说补给（红）刷新权重").defineInRange("weightEpic", 9, 0, 10000);
-        WEIGHT_MYTHIC = builder.comment("神话补给（金）刷新权重").defineInRange("weightMythic", 3, 0, 10000);
-        COLOR_COMMON = builder.comment("常规补给光柱颜色（#RRGGBB）").define("colorCommon", "#3AE86B");
-        COLOR_UNCOMMON = builder.comment("稀有补给光柱颜色（#RRGGBB）").define("colorUncommon", "#3AB8FF");
-        COLOR_RARE = builder.comment("史诗补给光柱颜色（#RRGGBB）").define("colorRare", "#B45BFF");
-        COLOR_EPIC = builder.comment("传说补给光柱颜色（#RRGGBB）").define("colorEpic", "#FF4A5E");
-        COLOR_MYTHIC = builder.comment("神话补给光柱颜色（#RRGGBB）").define("colorMythic", "#FFC845");
+        builder.comment("稀有度：刷新权重与光柱颜色（罕见/稀有/史诗/传奇；安装 Manhunt 时对应其四档奖池）").push("rarity");
+        WEIGHT_UNCOMMON = builder.comment("罕见补给（绿）刷新权重").defineInRange("weightUncommon", 46, 0, 10000);
+        WEIGHT_RARE = builder.comment("稀有补给（蓝）刷新权重").defineInRange("weightRare", 27, 0, 10000);
+        WEIGHT_EPIC = builder.comment("史诗补给（紫）刷新权重").defineInRange("weightEpic", 18, 0, 10000);
+        WEIGHT_LEGENDARY = builder.comment("传奇补给（红）刷新权重").defineInRange("weightLegendary", 9, 0, 10000);
+        COLOR_UNCOMMON = builder.comment("罕见补给光柱颜色（#RRGGBB）").define("colorUncommon", "#3AE86B");
+        COLOR_RARE = builder.comment("稀有补给光柱颜色（#RRGGBB）").define("colorRare", "#3AB8FF");
+        COLOR_EPIC = builder.comment("史诗补给光柱颜色（#RRGGBB）").define("colorEpic", "#B45BFF");
+        COLOR_LEGENDARY = builder.comment("传奇补给光柱颜色（#RRGGBB）").define("colorLegendary", "#FF4A5E");
         builder.pop();
 
         builder.comment("调试").push("debug");
@@ -160,16 +156,14 @@ public final class SupplyBeamConfig {
         entry("beam.beamGrowthSeconds", BEAM_GROWTH_SECONDS, ValueType.INT, 1, 600);
         entry("crate.descendSpeedBlocksPerSecond", DESCEND_SPEED_BLOCKS_PER_SECOND, ValueType.DOUBLE, 0.05, 20.0);
         entry("crate.groundLifetimeSeconds", GROUND_LIFETIME_SECONDS, ValueType.INT, 10, 86400);
-        entry("rarity.weightCommon", WEIGHT_COMMON, ValueType.INT, 0, 10000);
         entry("rarity.weightUncommon", WEIGHT_UNCOMMON, ValueType.INT, 0, 10000);
         entry("rarity.weightRare", WEIGHT_RARE, ValueType.INT, 0, 10000);
         entry("rarity.weightEpic", WEIGHT_EPIC, ValueType.INT, 0, 10000);
-        entry("rarity.weightMythic", WEIGHT_MYTHIC, ValueType.INT, 0, 10000);
-        entry("rarity.colorCommon", COLOR_COMMON, ValueType.COLOR, 0, 0);
+        entry("rarity.weightLegendary", WEIGHT_LEGENDARY, ValueType.INT, 0, 10000);
         entry("rarity.colorUncommon", COLOR_UNCOMMON, ValueType.COLOR, 0, 0);
         entry("rarity.colorRare", COLOR_RARE, ValueType.COLOR, 0, 0);
         entry("rarity.colorEpic", COLOR_EPIC, ValueType.COLOR, 0, 0);
-        entry("rarity.colorMythic", COLOR_MYTHIC, ValueType.COLOR, 0, 0);
+        entry("rarity.colorLegendary", COLOR_LEGENDARY, ValueType.COLOR, 0, 0);
         entry("debug.debugMode", DEBUG_MODE, ValueType.BOOLEAN, 0, 0);
     }
 
@@ -256,22 +250,20 @@ public final class SupplyBeamConfig {
     /** 各稀有度刷新权重（下标 = ordinal）。 */
     public static int[] weights() {
         return new int[] {
-            Math.max(0, WEIGHT_COMMON.get()),
             Math.max(0, WEIGHT_UNCOMMON.get()),
             Math.max(0, WEIGHT_RARE.get()),
             Math.max(0, WEIGHT_EPIC.get()),
-            Math.max(0, WEIGHT_MYTHIC.get())
+            Math.max(0, WEIGHT_LEGENDARY.get())
         };
     }
 
     /** 稀有度主题色（0xRRGGBB），解析失败回退枚举默认色。 */
     public static int colorOf(SupplyRarity rarity) {
         String hex = switch (rarity) {
-            case COMMON -> COLOR_COMMON.get();
             case UNCOMMON -> COLOR_UNCOMMON.get();
             case RARE -> COLOR_RARE.get();
             case EPIC -> COLOR_EPIC.get();
-            case MYTHIC -> COLOR_MYTHIC.get();
+            case LEGENDARY -> COLOR_LEGENDARY.get();
         };
         try {
             String cleaned = hex.trim().replace("#", "");

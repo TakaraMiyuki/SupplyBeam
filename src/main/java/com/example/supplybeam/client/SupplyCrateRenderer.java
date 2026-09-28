@@ -115,17 +115,28 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
         }
 
         // ===== 光柱与地面光环（本地坐标：实体原点=地面锚点） =====
+        // 显现：光柱自天空向下延伸至地面；消散：底端自下而上收回
         float beamBase = state.groundY - (float) state.y;
         float beamTop = state.topY - (float) state.y;
+        float span = Math.max(0.0f, beamTop - beamBase);
         float grow = 1.0f;
+        float drawBase = beamBase;
         if (state.phase == SupplyCrateEntity.PHASE_GATHERING) {
             float t = Mth.clamp((age - state.phaseTick) / Math.max(1, state.growthTicks), 0.0f, 1.0f);
             grow = 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t); // easeOutCubic：先快后缓
+            drawBase = beamTop - span * grow;
+        } else if (state.phase == SupplyCrateEntity.PHASE_VANISHING) {
+            drawBase = beamBase + span * (1.0f - fade);
         }
-        float top = beamBase + (beamTop - beamBase) * grow;
-        if (top > beamBase + 0.05f) {
-            renderBeam(poseStack, collector, beamBase, top, color, age, fade);
-            renderRing(poseStack, collector, beamBase + 0.06f, color, age, fade);
+        if (beamTop - drawBase > 0.05f) {
+            renderBeam(poseStack, collector, drawBase, beamTop, color, age, fade);
+            // 光环仅在光柱触地后出现，消散时随整体淡出
+            float ringAlpha = state.phase == SupplyCrateEntity.PHASE_GATHERING
+                ? Mth.clamp((grow - 0.7f) / 0.3f, 0.0f, 1.0f)
+                : 1.0f;
+            if (ringAlpha > 0.01f) {
+                renderRing(poseStack, collector, beamBase + 0.06f, color, age, fade * ringAlpha);
+            }
         }
 
         // ===== 补给箱 =====

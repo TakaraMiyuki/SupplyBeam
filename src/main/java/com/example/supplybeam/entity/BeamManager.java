@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.HashSet;
@@ -172,16 +173,14 @@ public final class BeamManager {
         level.getChunk(SectionPos.blockToSectionCoord(bx), SectionPos.blockToSectionCoord(bz),
             ChunkStatus.FULL, true);
 
-        int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
+        int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, bx, bz);
         if (surface < SupplyBeamConfig.MIN_SURFACE_Y.get()) {
             return "supplybeam.reason.below_min_surface";
         }
         BlockPos below = new BlockPos(bx, surface - 1, bz);
-        BlockState ground = level.getBlockState(below);
-        if (!level.getFluidState(below).isEmpty()
-            || !(ground.blocksMotion() || ground.is(BlockTags.SNOW))) {
-            // 落点必须是干燥地面：实心方块或雪层（雪原/高山雪线此前被整片误拒）
-            return "supplybeam.reason.bad_ground";
+        if (level.getFluidState(below).is(Fluids.LAVA)) {
+            // 树叶顶/屋顶/雪地/水面均可（箱子悬浮在表面），唯独岩浆不行
+            return "supplybeam.reason.lava";
         }
         // 3 格高的补给箱需要上方三格净空（树叶放行：补给箱无碰撞，树冠下生成无碍）
         for (int dy = 0; dy < 3; dy++) {
