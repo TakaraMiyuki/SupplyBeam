@@ -13,8 +13,8 @@
 2. [稀有度与奖池](#2-稀有度与奖池)
 3. [完整流程与计时](#3-完整流程与计时)
 4. [与 Manhunt 的联动](#4-与-manhunt-的联动)
-5. [配置文件](#5-配置文件)
-6. [管理员指令](#6-管理员指令)
+5. [游戏内配置](#5-游戏内配置)
+6. [调试模式](#6-调试模式)
 7. [安装与构建](#7-安装与构建)
 8. [美术资产](#8-美术资产)
 
@@ -74,9 +74,22 @@
 - 未安装 Manhunt：作为独立玩法在任何存档运行。
 - 依赖声明为可选（`optional`，ordering `NONE`），不存在加载顺序约束。
 
-## 5. 配置文件
+## 5. 游戏内配置
 
-首次启动生成 `config/supplybeam-common.toml`（单人/服务端各自加载），全部数值热注释齐全：
+配置文件 `config/supplybeam-common.toml`（首次启动生成），支持三种修改方式：
+
+**① 图形配置界面（推荐，单人）**：模组列表（ mods 菜单）→ 选中"补给光柱" → 点"配置"按钮。三页分页（刷新 / 光柱与补给箱 / 稀有度与颜色），颜色项带实时色块预览，保存时逐项校验，非法值红字提示且不写入。
+
+**② 指令配置（推荐，服务器，权限等级 2，立即生效并写入文件）**：
+
+```
+/supplybeam config list              列出全部配置项与当前值
+/supplybeam config set <key> <value> 热更新（如 set crate.groundLifetimeSeconds 60、set rarity.colorCommon #00FF88）
+/supplybeam config reset <key>       恢复某项默认值
+/supplybeam info                     查看活跃光柱数、下次刷新倒计时、调试开关
+```
+
+**③ 直接改 TOML 文件**：重启后生效（指令与 GUI 改动即时落盘，无需重启）。
 
 | 分节 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- | --- |
@@ -90,17 +103,26 @@
 | crate | `groundLifetimeSeconds` | 300 | 着陆后待拾取时长（秒） |
 | rarity | `weightCommon` … `weightMythic` | 46/27/15/9/3 | 各稀有度刷新权重 |
 | rarity | `colorCommon` … `colorMythic` | 见上表 | 各稀有度光柱颜色（#RRGGBB） |
+| debug | `debugMode` | false | 调试模式开关（见下节） |
 
 > 光柱颜色在服务端修改后对所有玩家生效（颜色随实体同步）；其余行为项仅服务端需要一致。
 
-## 6. 管理员指令
+## 6. 调试模式
 
-需要权限等级 2（OP）：
+`/supplybeam debug on` 开启（关闭用 `off`），开关本身会写入配置文件持久保存。开启后解锁：
 
 | 指令 | 说明 |
 | --- | --- |
-| `/supplybeam spawn <rarity>` | 在准星所指位置强制生成一根光柱；`rarity` ∈ common/uncommon/rare/epic/mythic（Tab 补全） |
-| `/supplybeam clear` | 清除当前维度的全部补给光柱 |
+| `/supplybeam spawn <rarity>` | 在准星所指位置强制生成一根光柱（无需调试模式） |
+| `/supplybeam clear` | 清除当前维度全部光柱（无需调试模式） |
+| `/supplybeam spawnhere <rarity>` | 在脚下生成光柱 |
+| `/supplybeam list` | 列出当前维度光柱明细：坐标、稀有度、阶段、剩余时间 |
+| `/supplybeam fastforward` | 准星光柱直接跳到下一阶段（显现→降落→着陆→消散各瞬间完成） |
+| `/supplybeam timer <seconds>` | 设置准星光柱的消散倒计时 |
+
+调试模式开启时还会：自然刷新成功后**向全服广播坐标**（`[调试] 传说补给 光柱已刷新于 x=…, z=…`）；控制台记录每次刷新尝试的选址/跳过原因（如"地表高度低于下限""上方净空不足"），排查"为什么没刷"一目了然。
+
+> "准星光柱"的判定：优先取视线方向夹角最小的光柱，否则回退为 24 格内最近的。
 
 ## 7. 安装与构建
 

@@ -3,6 +3,8 @@ package com.example.supplybeam;
 import com.example.supplybeam.loot.SupplyRarity;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
+import java.util.Locale;
+
 /**
  * 全部可调数值：config/supplybeam-common.toml（客户端与服务端各自加载同一份默认）。
  * 光柱颜色由服务端同步到实体（客户端渲染始终使用服务端下发的颜色）。
@@ -48,6 +50,30 @@ public final class SupplyBeamConfig {
     public static final ModConfigSpec.ConfigValue<String> COLOR_RARE;
     public static final ModConfigSpec.ConfigValue<String> COLOR_EPIC;
     public static final ModConfigSpec.ConfigValue<String> COLOR_MYTHIC;
+
+    public static final ModConfigSpec.BooleanValue DEBUG_MODE;
+
+    // ==================== 配置项注册表（指令 /supplybeam config 与图形界面共用） ====================
+
+    /** 配置值类型。 */
+    public enum ValueType { INT, DOUBLE, COLOR, BOOLEAN }
+
+    /** 单个配置项元数据：值引用、类型、合法区间（COLOR 无区间）。 */
+    public record ConfigEntry(String key, ModConfigSpec.ConfigValue<?> value, ValueType type, double min, double max) {
+        public String labelKey() {
+            return "supplybeam.config." + key;
+        }
+
+        public String commentKey() {
+            return "supplybeam.config." + key + ".tooltip";
+        }
+    }
+
+    private static final java.util.LinkedHashMap<String, ConfigEntry> ENTRIES = new java.util.LinkedHashMap<>();
+
+    private static void entry(String key, ModConfigSpec.ConfigValue<?> value, ValueType type, double min, double max) {
+        ENTRIES.put(key, new ConfigEntry(key, value, type, min, max));
+    }
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -107,7 +133,116 @@ public final class SupplyBeamConfig {
         COLOR_MYTHIC = builder.comment("神话补给光柱颜色（#RRGGBB）").define("colorMythic", "#FFC845");
         builder.pop();
 
+        builder.comment("调试").push("debug");
+        DEBUG_MODE = builder
+            .comment("调试模式：解锁 /supplybeam 的 spawnhere/list/fastforward/timer 指令，"
+                + "自然刷新时向全服广播调试消息并在控制台记录选址原因")
+            .define("debugMode", false);
+        builder.pop();
+
         SPEC = builder.build();
+
+        // 注册表（静态块末尾统一登记，供指令与 GUI 按相同元数据读写）
+        entry("spawn.spawnIntervalMinSeconds", SPAWN_INTERVAL_MIN_SECONDS, ValueType.INT, 5, 86400);
+        entry("spawn.spawnIntervalMaxSeconds", SPAWN_INTERVAL_MAX_SECONDS, ValueType.INT, 10, 86400);
+        entry("spawn.maxActive", MAX_ACTIVE, ValueType.INT, 1, 64);
+        entry("spawn.spawnRadiusMin", SPAWN_RADIUS_MIN, ValueType.INT, 16, 4096);
+        entry("spawn.spawnRadiusMax", SPAWN_RADIUS_MAX, ValueType.INT, 32, 8192);
+        entry("spawn.minSurfaceY", MIN_SURFACE_Y, ValueType.INT, -64, 320);
+        entry("beam.beamHeightMin", BEAM_HEIGHT_MIN, ValueType.INT, 24, 512);
+        entry("beam.beamHeightMax", BEAM_HEIGHT_MAX, ValueType.INT, 32, 512);
+        entry("beam.beamGrowthSeconds", BEAM_GROWTH_SECONDS, ValueType.INT, 1, 600);
+        entry("crate.descendSpeedBlocksPerSecond", DESCEND_SPEED_BLOCKS_PER_SECOND, ValueType.DOUBLE, 0.05, 20.0);
+        entry("crate.groundLifetimeSeconds", GROUND_LIFETIME_SECONDS, ValueType.INT, 10, 86400);
+        entry("rarity.weightCommon", WEIGHT_COMMON, ValueType.INT, 0, 10000);
+        entry("rarity.weightUncommon", WEIGHT_UNCOMMON, ValueType.INT, 0, 10000);
+        entry("rarity.weightRare", WEIGHT_RARE, ValueType.INT, 0, 10000);
+        entry("rarity.weightEpic", WEIGHT_EPIC, ValueType.INT, 0, 10000);
+        entry("rarity.weightMythic", WEIGHT_MYTHIC, ValueType.INT, 0, 10000);
+        entry("rarity.colorCommon", COLOR_COMMON, ValueType.COLOR, 0, 0);
+        entry("rarity.colorUncommon", COLOR_UNCOMMON, ValueType.COLOR, 0, 0);
+        entry("rarity.colorRare", COLOR_RARE, ValueType.COLOR, 0, 0);
+        entry("rarity.colorEpic", COLOR_EPIC, ValueType.COLOR, 0, 0);
+        entry("rarity.colorMythic", COLOR_MYTHIC, ValueType.COLOR, 0, 0);
+        entry("debug.debugMode", DEBUG_MODE, ValueType.BOOLEAN, 0, 0);
+    }
+
+    // ==================== 注册表访问与热更新 ====================
+
+    public static java.util.Collection<ConfigEntry> entries() {
+        return java.util.Collections.unmodifiableCollection(ENTRIES.values());
+    }
+
+    public static ConfigEntry entry(String key) {
+        return ENTRIES.get(key);
+    }
+
+    /** 当前值转字符串（指令展示与 GUI 填充共用）。 */
+    public static String valueAsString(ConfigEntry e) {
+        Object v = e.value().get();
+        if (e.type() == ValueType.DOUBLE) {
+            double d = ((Number) v).doubleValue();
+            return (d == Math.floor(d) && !Double.isInfinite(d)) ? String.valueOf((long) d) : String.valueOf(d);
+        }
+        return String.valueOf(v);
+    }
+
+    /**
+     * 校验并热更新一个配置项（写入内存并保存到 TOML 文件）。
+     * @return null 表示成功，否则返回错误说明
+     */
+    public static String applyValue(ConfigEntry e, String raw) {
+        String input = raw == null ? "" : raw.trim();
+        try {
+            switch (e.type()) {
+                case INT -> {
+                    int v = Integer.parseInt(input);
+                    if (v < e.min() || v > e.max()) {
+                        return "range " + (long) e.min() + "~" + (long) e.max();
+                    }
+                    setRaw(e.value(), v);
+                }
+                case DOUBLE -> {
+                    double v = Double.parseDouble(input);
+                    if (v < e.min() || v > e.max()) {
+                        return "range " + e.min() + "~" + e.max();
+                    }
+                    setRaw(e.value(), v);
+                }
+                case COLOR -> {
+                    if (!input.matches("^#?[0-9a-fA-F]{6}$")) {
+                        return "color #RRGGBB";
+                    }
+                    setRaw(e.value(), "#" + input.replace("#", "").toUpperCase());
+                }
+                case BOOLEAN -> {
+                    String lower = input.toLowerCase(Locale.ROOT);
+                    if (!lower.equals("true") && !lower.equals("false") && !lower.equals("on") && !lower.equals("off")) {
+                        return "boolean true/false";
+                    }
+                    setRaw(e.value(), lower.equals("true") || lower.equals("on"));
+                }
+            }
+        } catch (NumberFormatException ex) {
+            return e.type() == ValueType.DOUBLE ? "number" : "integer";
+        }
+        SPEC.save();
+        return null;
+    }
+
+    /** 恢复某配置项默认值并保存。 */
+    public static void resetValue(ConfigEntry e) {
+        setRaw(e.value(), e.value().getDefault());
+        SPEC.save();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void setRaw(ModConfigSpec.ConfigValue value, Object v) {
+        value.set(v);
+    }
+
+    public static boolean debugMode() {
+        return DEBUG_MODE.get();
     }
 
     // ==================== 便捷读取 ====================

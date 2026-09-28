@@ -362,6 +362,47 @@ public class SupplyCrateEntity extends Entity {
         output.putInt("GrowthTicks", growthTicks());
     }
 
+    // ==================== 调试 ====================
+
+    /** 调试：把当前阶段的时间进度直接推到边界（下个游戏刻触发阶段切换）。 */
+    public void debugSkipPhase() {
+        switch (phase()) {
+            case PHASE_GATHERING -> this.entityData.set(DATA_PHASE_TICK, this.ageTicks - growthTicks());
+            case PHASE_DESCENDING -> land();
+            case PHASE_LANDED -> this.entityData.set(DATA_PHASE_TICK, this.ageTicks - lifetimeTicks());
+            default -> this.entityData.set(DATA_PHASE_TICK, this.ageTicks - SupplyBeamConfig.VANISH_TICKS);
+        }
+    }
+
+    /** 调试：设置着陆倒计时剩余秒数，仅着陆阶段有效。 */
+    public boolean debugSetRemainingSeconds(int seconds) {
+        if (phase() != PHASE_LANDED) {
+            return false;
+        }
+        int sec = Math.max(1, seconds);
+        this.entityData.set(DATA_PHASE_TICK, this.ageTicks - Math.min(lifetimeTicks(), sec * 20));
+        refreshName();
+        return true;
+    }
+
+    /** 调试：当前阶段剩余秒数（下降阶段无固定时长，返回 -1）。 */
+    public int debugRemainingSeconds() {
+        return switch (phase()) {
+            case PHASE_GATHERING -> Math.max(0, (growthTicks() - (this.ageTicks - phaseTick()) + 19) / 20);
+            case PHASE_LANDED -> Math.max(0, (lifetimeTicks() - (this.ageTicks - phaseTick()) + 19) / 20);
+            default -> -1;
+        };
+    }
+
+    public String phaseKey() {
+        return switch (phase()) {
+            case PHASE_GATHERING -> "supplybeam.phase.gathering";
+            case PHASE_DESCENDING -> "supplybeam.phase.descending";
+            case PHASE_LANDED -> "supplybeam.phase.landed";
+            default -> "supplybeam.phase.vanishing";
+        };
+    }
+
     // ==================== 工具 ====================
 
     private DustParticleOptions dustOf() {

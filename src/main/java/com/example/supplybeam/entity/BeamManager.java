@@ -4,11 +4,13 @@ import com.example.supplybeam.SupplyBeamConfig;
 import com.example.supplybeam.compat.ManhuntBridge;
 import com.example.supplybeam.loot.SupplyRarity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -44,6 +46,11 @@ public final class BeamManager {
         return ACTIVE.size();
     }
 
+    /** 调试：距下次自然刷新尝试的秒数。 */
+    public static int nextSpawnSeconds() {
+        return Math.max(0, (nextSpawnTick + 19) / 20);
+    }
+
     public static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         ServerLevel level = server.overworld();
@@ -65,14 +72,17 @@ public final class BeamManager {
 
     private static void trySpawn(ServerLevel level) {
         if (ACTIVE.size() >= SupplyBeamConfig.MAX_ACTIVE.get()) {
+            debugLog("跳过刷新：活跃光柱已达上限（" + ACTIVE.size() + "）");
             return;
         }
         // Manhunt 联动：逃脱窗口期（猎人被定身）暂停刷新
         if (ManhuntBridge.shouldHoldSpawns()) {
+            debugLog("跳过刷新：Manhunt 逃脱窗口期");
             return;
         }
         List<ServerPlayer> players = level.players();
         if (players.isEmpty()) {
+            debugLog("跳过刷新：主世界没有玩家");
             return;
         }
         ServerPlayer anchor = players.get(RNG.nextInt(players.size()));
@@ -84,7 +94,34 @@ public final class BeamManager {
         int bx = (int) Math.round(anchor.getX() + Math.cos(angle) * dist);
         int bz = (int) Math.round(anchor.getZ() + Math.sin(angle) * dist);
         SupplyRarity rarity = SupplyRarity.weighted(RNG);
-        spawnAt(level, bx, bz, rarity);
+        if (spawnAt(level, bx, bz, rarity)) {
+            debugBroadcast(level, rarity, bx, bz);
+        }
+    }
+
+    /** 调试：控制台记录选址/跳过原因（仅调试模式）。 */
+    private static void debugLog(String message) {
+        if (SupplyBeamConfig.debugMode()) {
+            com.example.supplybeam.SupplyBeamMod.LOGGER.info("[SupplyBeam 调试] {}", message);
+        }
+    }
+
+    /** 调试：自然刷新成功时向全服广播坐标（仅调试模式）。 */
+    private static void debugBroadcast(ServerLevel level, SupplyRarity rarity, int bx, int bz) {
+        if (!SupplyBeamConfig.debugMode()) {
+            return;
+        }
+        com.example.supplybeam.SupplyBeamMod.LOGGER.info("[SupplyBeam 调试] {} 光柱已刷新于 x={}, z={}",
+            rarity.id(), bx, bz);
+        net.minecraft.network.chat.MutableComponent rarityPart =
+            net.minecraft.network.chat.Component.translatable(rarity.translationKey())
+                .withStyle(rarity.formatting());
+        net.minecraft.network.chat.Component message =
+            net.minecraft.network.chat.Component.translatable("supplybeam.debug.spawned",
+                rarityPart, bx, bz).withStyle(net.minecraft.ChatFormatting.GRAY);
+        for (ServerPlayer player : level.players()) {
+            player.sendSystemMessage(message);
+        }
     }
 
     /**
@@ -96,19 +133,27 @@ public final class BeamManager {
         bx = (int) Math.max(border.getMinX() + 8, Math.min(bx, border.getMaxX() - 8));
         bz = (int) Math.max(border.getMinZ() + 8, Math.min(bz, border.getMaxZ() - 8));
 
+        // 26.2 的 Level.getHeight 不再加载区块（未加载时直接返回世界最低层），
+        // 远距选址必须先同步生成目标区块
+        level.getChunk(SectionPos.blockToSectionCoord(bx), SectionPos.blockToSectionCoord(bz),
+            ChunkStatus.FULL, true);
+
         int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
         if (surface < SupplyBeamConfig.MIN_SURFACE_Y.get()) {
+            debugLog("选址放弃 (" + bx + "," + bz + ")：地表高度 " + surface + " 低于下限");
             return false;
         }
         BlockPos below = new BlockPos(bx, surface - 1, bz);
         if (!level.getFluidState(below).isEmpty()
             || !level.getBlockState(below).blocksMotion()) {
+            debugLog("选址放弃 (" + bx + "," + bz + ")：落点不是干燥实心地面");
             return false; // 落点必须是干燥实心地面（排除海面/湖面/悬崖）
         }
         // 3 格高的补给箱需要上方三格净空
         for (int dy = 0; dy < 3; dy++) {
             BlockPos pos = new BlockPos(bx, surface + dy, bz);
             if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
+                debugLog("选址放弃 (" + bx + "," + bz + ")：上方净空不足");
                 return false;
             }
         }
@@ -118,6 +163,7 @@ public final class BeamManager {
         int height = heightMin + RNG.nextInt(heightMax - heightMin + 1);
         float topY = Math.min((float) level.getMaxY() - 6.0f, surface + height);
         if (topY - surface < 48.0f) {
+            debugLog("选址放弃 (" + bx + "," + bz + ")：地表过高，光柱放不下（地表 y=" + surface + "）");
             return false; // 高山地形放不下完整光柱，放弃本次
         }
 
