@@ -1,0 +1,16 @@
+{
+  "supplybeam.rarity.common": "Common Supply",
+  "supplybeam.rarity.uncommon": "Rare Supply",
+  "supplybeam.rarity.rare": "Epic Supply",
+  "supplybeam.rarity.epic": "Legendary Supply",
+  "supplybeam.rarity.mythic": "Mythic Supply",
+
+  "supplybeam.crate.name": "%s Supply Crate",
+
+  "supplybeam.notice.spawn": "A %s has appeared nearby...",
+
+  "supplybeam.command.spawned": "Supply beam spawned: %s",
+  "supplybeam.command.cleared": "Cleared %s supply beam(s)",
+  "supplybeam.command.unknown_rarity": "Unknown rarity: %s (common/uncommon/rare/epic/mythic)",
+  "supplybeam.command.bad_spot": "Invalid spot: the beam needs solid, dry surface ground"
+}

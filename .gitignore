@@ -1,0 +1,19 @@
+# Gradle
+.gradle/
+build/
+
+# Dev runtime
+run/
+runs/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+
+# ZCode
+.zcode/
+release_payload.json

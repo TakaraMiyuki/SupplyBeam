@@ -1,0 +1,16 @@
+{
+  "supplybeam.rarity.common": "常规补给",
+  "supplybeam.rarity.uncommon": "稀有补给",
+  "supplybeam.rarity.rare": "史诗补给",
+  "supplybeam.rarity.epic": "传说补给",
+  "supplybeam.rarity.mythic": "神话补给",
+
+  "supplybeam.crate.name": "%s · 空投补给箱",
+
+  "supplybeam.notice.spawn": "一道%s出现在附近……",
+
+  "supplybeam.command.spawned": "已生成补给光柱：%s",
+  "supplybeam.command.cleared": "已清除 %s 根补给光柱",
+  "supplybeam.command.unknown_rarity": "未知稀有度：%s（可选 common/uncommon/rare/epic/mythic）",
+  "supplybeam.command.bad_spot": "选址无效：光柱需要落在干燥实心的地表上"
+}

@@ -1,0 +1,42 @@
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+
+# The authors of the mod, displayed in the mod UI
+authors="${mod_authors}"
+description='''
+补给光柱（Supply Beam）：灵感来自方舟生存飞升的空投光柱。主世界随机刷新彩色补给光柱，
+颜色决定稀有度（常规/稀有/史诗/传说/神话）；光柱缓缓显现后，一枚菱形八面体补给箱
+沿光柱自天而降，落地即可拾取，超时无人拾取将自行消散。与猎人游戏 Manhunt 可选联动。
+(Supply Beam: ARK-inspired supply drops. Colored beams randomly appear in the Overworld -
+color decides rarity. Once the beam is fully formed, an octahedral supply crate slowly
+descends along it. Land it, grab it before it fades. Optional Manhunt integration.)
+'''
+
+iconFile="assets/supplybeam/icon.png"
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[${neo_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+# 猎人游戏 Manhunt（可选）：同时安装时联动对局阶段（逃脱窗口期暂停刷新）。
+# ordering 保持 NONE，与 SkillCards/Manhunt 家族约定一致，避免 AFTER 环
+[[dependencies.${mod_id}]]
+    modId="manhunt"
+    type="optional"
+    versionRange="[0.1.0,)"
+    ordering="NONE"
+    side="BOTH"
