@@ -37,69 +37,71 @@ def dist_to_segment(px, py, ax, ay, bx, by):
 
 
 # ============================================================
-# 1) 补给箱 crate.png —— 64×64，四个 32×32 贴图格
-#    每格对应一个三角面：金属面板 + 棱边高光 + 中央菱形窗（透明，透出光核）
+# 1) 补给箱 crate.png —— 128×128，四个 64×64 贴图格
+#    每格对应一个三角面：金属面板 + 棱边高光 + 铆钉 + 中央小窗（半透明，透出光核）
+#    窗格不做全透明（保底 alpha），避免远处/暗处看起来像"缺面"
 # ============================================================
 
 def make_crate():
-    S = 128  # 每格 4x 超采样
+    S = 256  # 每格 4x 超采样（64px 格）
     img = Image.new("RGBA", (S * 2, S * 2), (0, 0, 0, 0))
     px = img.load()
 
-    # 三个三角面的三条棱（相对格内坐标，apexUp=True 表示上尖）
     edges_up = [((0.5, 0.0), (0.0, 1.0)), ((0.5, 0.0), (1.0, 1.0)), ((0.0, 1.0), (1.0, 1.0))]
 
     for cell in range(4):
         cx, cy = (cell % 2) * S, (cell // 2) * S
-        apex_up = cell < 2          # 上面两格：上尖；下面两格：下尖
-        bright = 1.0 if cell < 2 else 0.82   # 顶面比底面亮
-        pattern = cell % 2          # 左右格面板纹理略有差异
+        apex_up = cell < 2
+        bright = 1.0 if cell < 2 else 0.86
+        pattern = cell % 2
 
         for sy in range(S):
             for sx in range(S):
                 u = (sx + 0.5) / S
                 v = (sy + 0.5) / S
                 uu = u
-                vv = v if apex_up else 1.0 - v   # 统一成"上尖"坐标系
+                vv = v if apex_up else 1.0 - v
 
                 # ---- 金属底色：垂直渐变 + 拉丝纹理 + 噪声 ----
-                base = 0.66 + 0.15 * (1.0 - vv)          # 上尖更亮
-                base += 0.035 * math.sin(uu * math.pi * (6 + pattern * 3) + vv * 9.0)
-                base += random.uniform(-0.02, 0.02)
+                base = 0.70 + 0.13 * (1.0 - vv)
+                base += 0.03 * math.sin(uu * math.pi * (10 + pattern * 5) + vv * 14.0)
+                base += random.uniform(-0.015, 0.015)
 
-                # ---- 棱边：细暗描线 + 外圈焊接缝高光（受染色后呈发光棱线） ----
+                # ---- 棱边：细暗描线 + 外圈焊接缝高光 ----
                 d_edge = min(dist_to_segment(uu, vv, *e[0], *e[1]) for e in edges_up)
-                if d_edge < 0.028:
-                    base -= 0.20 * (1.0 - d_edge / 0.028)      # 细暗描边
-                elif d_edge < 0.11:
-                    base += 0.30 * smoothstep(0.11, 0.028, d_edge)  # 亮缝光
+                if d_edge < 0.020:
+                    base -= 0.16 * (1.0 - d_edge / 0.020)
+                elif d_edge < 0.09:
+                    base += 0.26 * smoothstep(0.09, 0.020, d_edge)
 
-                # ---- 面板分割线（每格 1-2 条内棱） ----
-                panel_v = 0.52 if pattern == 0 else 0.40
-                if abs(vv - panel_v) < 0.014:
-                    base -= 0.16
-                if abs(uu - 0.5) > 0.42 and abs(vv - panel_v) < 0.05:
-                    base -= 0.05  # 分割线交角处加深
+                # ---- 内部分割棱（每格两条，形成三段面板） ----
+                for panel_v in ((0.38, 0.72) if pattern == 0 else (0.45, 0.66)):
+                    if abs(vv - panel_v) < 0.010:
+                        base -= 0.13
+                    elif abs(vv - panel_v) < 0.035:
+                        base += 0.07 * smoothstep(0.035, 0.010, abs(vv - panel_v))
 
-                # ---- 中央菱形窗（透出光核）：软边透明 + 亮圈 ----
-                dw = abs(uu - 0.5) + abs(vv - 0.60)
-                if dw < 0.17:
-                    alpha = int(255 * smoothstep(0.13, 0.17, dw))   # 中心全透明
-                    base += 0.55 * smoothstep(0.17, 0.13, dw)       # 窗圈提亮
-                else:
-                    alpha = 255
-
-                # ---- 三角角落铆钉暗角 ----
+                # ---- 三角角落铆钉 ----
                 for corner in ((0.5, 0.0), (0.0, 1.0), (1.0, 1.0)):
                     d = math.hypot(uu - corner[0], vv - corner[1])
-                    if d < 0.07:
-                        base -= 0.22 * (1.0 - d / 0.07)
+                    if d < 0.030:
+                        base += 0.30 * (1.0 - d / 0.030)      # 铆钉亮点
+                    elif d < 0.055:
+                        base -= 0.10 * (1.0 - (d - 0.030) / 0.025)  # 铆钉凹座
+
+                # ---- 中央菱形窗（半透明透光 + 亮圈） ----
+                dw = abs(uu - 0.5) + abs(vv - 0.58)
+                if dw < 0.10:
+                    alpha = 70 + int(140 * smoothstep(0.06, 0.10, dw))   # 中心也保留透光底
+                    base += 0.45 * smoothstep(0.10, 0.06, dw)            # 窗圈提亮
+                else:
+                    alpha = 255
 
                 g = clamp(base * bright)
                 r = int(g * 255)
                 px[cx + sx, cy + sy] = (r, r, r, alpha)
 
-    img = img.resize((64, 64), Image.LANCZOS)
+    img = img.resize((128, 128), Image.LANCZOS)
     img.save(TEX / "crate.png")
 
 

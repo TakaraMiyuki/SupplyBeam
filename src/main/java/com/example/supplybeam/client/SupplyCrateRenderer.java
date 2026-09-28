@@ -3,7 +3,6 @@ package com.example.supplybeam.client;
 import com.example.supplybeam.SupplyBeamConfig;
 import com.example.supplybeam.SupplyBeamMod;
 import com.example.supplybeam.entity.SupplyCrateEntity;
-import com.example.supplybeam.loot.SupplyRarity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -16,17 +15,19 @@ import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import org.joml.Vector3f;
 
 /**
  * 补给光柱渲染器。四层视觉元素：
  * <ol>
- *   <li>光柱：双层十字面片（内芯窄亮 + 外晕宽柔），信标光柱管线全亮渲染，按稀有度染色；</li>
- *   <li>地面光环：脉动的全亮圆形光环，落地后呼吸感更强；</li>
- *   <li>补给箱：菱形八面体（双四棱锥）金属外壳，逐面平板着色 + 稀有度染色，缓速自转；</li>
+ *   <li>光柱：双层十字面片（内芯窄亮 + 外晕宽柔），信标光柱管线全亮渲染，颜色由服务端配置同步；</li>
+ *   <li>地面光环：脉动的全亮圆形光环；</li>
+ *   <li>补给箱：菱形八面体（双四棱锥）金属外壳，全亮自发光 + 逐面明暗 + 稀有度染色，缓速自转；</li>
  *   <li>发光内核：外壳中央窗格透出的脉冲光核，夜间尤其醒目。</li>
  * </ol>
- * 生长/消散进度由 ageInTicks - phaseTick 插值得出，与服务端状态机严格对齐。
+ * 视锥剔除使用覆盖整根光柱的包围盒（见 getBoundingBoxForCulling），
+ * 否则视角稍偏时箱子离开视锥，整根光柱会一起消失（表现为"要来回调视角才能看见"）。
  */
 public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, SupplyCrateRenderer.CrateRenderState> {
     private static final Identifier CRATE_TEXTURE =
@@ -41,6 +42,10 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
     private static final float BEAM_INNER = SupplyBeamConfig.BEAM_INNER_RADIUS;
     private static final float BEAM_OUTER = SupplyBeamConfig.BEAM_OUTER_RADIUS;
     private static final int FULL_BRIGHT = 15728880;
+    private static final int TEX_SIZE = 128;
+    private static final int CELL = 64;
+    /** UV 向格内收缩量（像素），防止线性采样跨格渗色。 */
+    private static final float UV_INSET = 1.0f;
 
     /** 八面体六个顶点：0=上尖 1=下尖 2=东 3=西 4=北 5=南。 */
     private static final float[][] VERTICES = {
@@ -50,8 +55,7 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
 
     /**
      * 八个三角面：{顶点a, 顶点b, 顶点c, 贴图格, 面亮度}。
-     * 环绕顺序均为从外侧看逆时针（外向法线）；贴图格为 64×64 中的 32×32 象限，
-     * 上面四格用上两象限、下面四格用下两象限。
+     * 环绕顺序均为从外侧看逆时针（外向法线）；上面四格用上两象限、下面四格用下两象限。
      */
     private static final int[][] FACES = {
         {0, 5, 2, 0, 233},  // 东南上：朝阳面
@@ -66,7 +70,7 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
 
     public SupplyCrateRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.shadowRadius = 0.5f;
+        this.shadowRadius = 1.2f;
     }
 
     @Override
@@ -82,13 +86,27 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
         state.groundY = entity.groundY();
         state.topY = entity.topY();
         state.phaseTick = entity.phaseTick();
+        state.color = entity.color();
+        state.growthTicks = entity.growthTicks();
+    }
+
+    /**
+     * 视锥剔除包围盒覆盖整根光柱（含地面光环），
+     * 修复"光柱要来回调整视角才能看见"的问题。
+     */
+    @Override
+    protected AABB getBoundingBoxForCulling(SupplyCrateEntity entity) {
+        double x = entity.getX(), z = entity.getZ();
+        double minY = Math.min(entity.getY(), entity.groundY()) - 1.0;
+        double maxY = Math.max(entity.getY() + SupplyCrateEntity.REST_CENTER_HEIGHT * 2.0,
+            entity.topY() + 2.0);
+        return new AABB(x - 2.5, minY, z - 2.5, x + 2.5, maxY, z + 2.5);
     }
 
     @Override
     public void submit(CrateRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
         float age = state.ageInTicks;
-        SupplyRarity rarity = SupplyRarity.VALUES[Math.floorMod(state.rarity, SupplyRarity.VALUES.length)];
-        int color = rarity.color();
+        int color = state.color & 0xFFFFFF;
 
         // 消散进度（0=完整，1=完全消失）
         float fade = 1.0f;
@@ -101,7 +119,7 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
         float beamTop = state.topY - (float) state.y;
         float grow = 1.0f;
         if (state.phase == SupplyCrateEntity.PHASE_GATHERING) {
-            float t = Mth.clamp((age - state.phaseTick) / SupplyBeamConfig.BEAM_GROWTH_TICKS, 0.0f, 1.0f);
+            float t = Mth.clamp((age - state.phaseTick) / Math.max(1, state.growthTicks), 0.0f, 1.0f);
             grow = 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t); // easeOutCubic：先快后缓
         }
         float top = beamBase + (beamTop - beamBase) * grow;
@@ -158,7 +176,7 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
                             float y, int color, float age, float fade) {
         float pulse = 0.7f + 0.3f * Mth.sin(age * 0.12f);
         int argb = tint(color, 1.0f, 0.8f * pulse * fade);
-        float size = 1.55f + 0.3f * Mth.sin(age * 0.12f);
+        float size = 2.4f + 0.45f * Mth.sin(age * 0.12f);
         collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(RING_TEXTURE),
             (pose, buf) -> {
                 groundQuad(pose, buf, argb, size, y, 1.0f);
@@ -187,12 +205,12 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
         float spin = state.phase == SupplyCrateEntity.PHASE_DESCENDING ? age * 0.025f : age * 0.008f;
         poseStack.mulPose(Axis.YP.rotation(spin));
         if (state.phase == SupplyCrateEntity.PHASE_LANDED) {
-            poseStack.translate(0.0, Mth.sin(age * 0.06f) * 0.05f, 0.0);
+            poseStack.translate(0.0, Mth.sin(age * 0.06f) * 0.06f, 0.0);
         }
 
-        // 金属外壳：世界光照 + 逐面明暗 + 稀有度染色
-        collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(CRATE_TEXTURE),
-            (pose, buf) -> octahedron(pose, buf, color, state.lightCoords, fade, false));
+        // 金属外壳：全亮自发光 + 逐面明暗 + 稀有度染色（夜晚/暗处不再隐没）
+        collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucentEmissive(CRATE_TEXTURE),
+            (pose, buf) -> octahedron(pose, buf, color, fade, false));
 
         // 发光内核：从中央窗格透出的稀有度光，缓慢脉冲
         float coreScale = 0.55f * (0.88f + 0.12f * Mth.sin(age * 0.15f)) * fade;
@@ -200,7 +218,7 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
         poseStack.scale(coreScale, coreScale, coreScale);
         int coreColor = brighten(color, 0.45f);
         collector.submitCustomGeometry(poseStack, RenderTypes.beaconBeam(BEAM_TEXTURE, true),
-            (pose, buf) -> octahedron(pose, buf, coreColor, FULL_BRIGHT, 0.95f, true));
+            (pose, buf) -> octahedron(pose, buf, coreColor, 0.95f, true));
         poseStack.popPose();
         poseStack.popPose();
     }
@@ -210,7 +228,7 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
      * uniformColor=true 时所有面同色（内核），否则按 FACES 亮度表做平板着色。
      */
     private static void octahedron(PoseStack.Pose pose, VertexConsumer buf, int color,
-                                   int light, float alpha, boolean uniformColor) {
+                                   float alpha, boolean uniformColor) {
         for (int[] face : FACES) {
             int a = face[0], b = face[1], c = face[2];
             int cell = face[3];
@@ -221,18 +239,18 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
             Vector3f normal = faceNormal(va, vb, vc);
 
             float[][] verts = {va, vb, vc};
-            int cellX = (cell & 1) * 32;
-            int cellY = (cell & 2) * 16;
+            int cellX = (cell & 1) * CELL;
+            int cellY = (cell & 2) * (CELL / 2);
             boolean apexUp = (a == 0); // 上面四格：上尖朝上；下面四格：下尖朝下
-            float apexU = cellX + 16, apexV = cellY + (apexUp ? 0 : 32);
-            float bU = cellX, bV = cellY + (apexUp ? 32 : 0);
-            float cU = cellX + 32, cV = cellY + (apexUp ? 32 : 0);
+            float apexU = cellX + CELL / 2.0f, apexV = cellY + (apexUp ? UV_INSET : CELL - UV_INSET);
+            float bU = cellX + UV_INSET, bV = cellY + (apexUp ? CELL - UV_INSET : UV_INSET);
+            float cU = cellX + CELL - UV_INSET, cV = cellY + (apexUp ? CELL - UV_INSET : UV_INSET);
             float[][] uvs = {{apexU, apexV}, {bU, bV}, {cU, cV}};
 
             for (int i = 0; i < 3; i++) {
                 float[] v = verts[i];
-                vertex(pose, buf, argb, v[0], v[1], v[2], uvs[i][0] / 64.0f, uvs[i][1] / 64.0f,
-                    normal.x, normal.y, normal.z, light);
+                vertex(pose, buf, argb, v[0], v[1], v[2], uvs[i][0] / TEX_SIZE, uvs[i][1] / TEX_SIZE,
+                    normal.x, normal.y, normal.z, FULL_BRIGHT);
             }
         }
     }
@@ -291,5 +309,7 @@ public class SupplyCrateRenderer extends EntityRenderer<SupplyCrateEntity, Suppl
         public float groundY;
         public float topY;
         public int phaseTick;
+        public int color;
+        public int growthTicks;
     }
 }

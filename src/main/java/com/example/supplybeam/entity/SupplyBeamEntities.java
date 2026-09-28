@@ -19,7 +19,7 @@ public final class SupplyBeamEntities {
 
     public static final Supplier<EntityType<SupplyCrateEntity>> SUPPLY_CRATE =
         ENTITIES.register("supply_crate", () -> EntityType.Builder.of(SupplyCrateEntity::new, MobCategory.MISC)
-            .sized(1.25f, 1.6f)
+            .sized(2.6f, 3.0f)
             .clientTrackingRange(16)
             .updateInterval(1)
             .build(ResourceKey.create(Registries.ENTITY_TYPE,

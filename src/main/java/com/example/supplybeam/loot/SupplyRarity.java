@@ -4,42 +4,35 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.util.RandomSource;
 
 /**
- * 补给稀有度，灵感来自方舟的空投颜色：绿 → 蓝 → 紫 → 红 → 金。
- * 权重决定生成概率，rolls 决定开箱时结算的物品条数。
+ * 补给稀有度：绿 → 蓝 → 紫 → 红 → 金（灵感来自方舟的空投颜色）。
+ * 刷新权重与光柱颜色由配置文件控制（SupplyBeamConfig），此处保留
+ * 默认颜色（配置解析失败时回退）、名称、着色与开箱条数。
  */
 public enum SupplyRarity {
-    COMMON(46, 0x4ADE80, ChatFormatting.GREEN, 4, "common"),
-    UNCOMMON(27, 0x38BDF8, ChatFormatting.AQUA, 6, "uncommon"),
-    RARE(15, 0xA855F7, ChatFormatting.LIGHT_PURPLE, 8, "rare"),
-    EPIC(9, 0xF43F5E, ChatFormatting.RED, 10, "epic"),
-    MYTHIC(3, 0xFBBF24, ChatFormatting.GOLD, 12, "mythic");
+    COMMON(0x3AE86B, ChatFormatting.GREEN, 4, "common"),
+    UNCOMMON(0x3AB8FF, ChatFormatting.AQUA, 6, "uncommon"),
+    RARE(0xB45BFF, ChatFormatting.LIGHT_PURPLE, 8, "rare"),
+    EPIC(0xFF4A5E, ChatFormatting.RED, 10, "epic"),
+    MYTHIC(0xFFC845, ChatFormatting.GOLD, 12, "mythic");
 
     public static final SupplyRarity[] VALUES = values();
 
-    /** 生成权重。 */
-    private final int weight;
-    /** 主题色（0xRRGGBB），用于粒子与光柱染色。 */
-    private final int color;
+    /** 配置缺失/非法时的回退色（0xRRGGBB）。 */
+    private final int defaultColor;
     private final ChatFormatting formatting;
     /** 开箱结算条数。 */
     private final int rolls;
     private final String id;
 
-    SupplyRarity(int weight, int color, ChatFormatting formatting, int rolls, String id) {
-        this.weight = weight;
-        this.color = color;
+    SupplyRarity(int defaultColor, ChatFormatting formatting, int rolls, String id) {
+        this.defaultColor = defaultColor;
         this.formatting = formatting;
         this.rolls = rolls;
         this.id = id;
     }
 
-    public int weight() {
-        return this.weight;
-    }
-
-    /** 0xRRGGBB。 */
-    public int color() {
-        return this.color;
+    public int defaultColor() {
+        return this.defaultColor;
     }
 
     public ChatFormatting formatting() {
@@ -58,17 +51,21 @@ public enum SupplyRarity {
         return "supplybeam.rarity." + this.id;
     }
 
-    /** 按权重随机抽一档稀有度。 */
+    /** 按配置权重随机抽一档稀有度。 */
     public static SupplyRarity weighted(RandomSource random) {
+        int[] weights = com.example.supplybeam.SupplyBeamConfig.weights();
         int total = 0;
-        for (SupplyRarity r : VALUES) {
-            total += r.weight;
+        for (int w : weights) {
+            total += Math.max(0, w);
+        }
+        if (total <= 0) {
+            return COMMON;
         }
         int roll = random.nextInt(total);
-        for (SupplyRarity r : VALUES) {
-            roll -= r.weight;
+        for (int i = 0; i < weights.length; i++) {
+            roll -= Math.max(0, weights[i]);
             if (roll < 0) {
-                return r;
+                return VALUES[i];
             }
         }
         return MYTHIC;
