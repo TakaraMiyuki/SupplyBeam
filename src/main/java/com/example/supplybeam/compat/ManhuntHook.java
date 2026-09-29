@@ -3,7 +3,6 @@ package com.example.supplybeam.compat;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.manhunt.GameConfig;
 import com.example.manhunt.game.ManhuntGame;
 import com.example.manhunt.loot.PendingRewardManager;
 import com.example.manhunt.loot.RewardPools;
@@ -18,26 +17,47 @@ import net.minecraft.world.item.ItemStack;
 final class ManhuntHook {
     private ManhuntHook() {}
 
+    /**
+     * 四档稀有度对应的抽奖配方：{奖池档位组合, 件数, 抽奖类型}。
+     * 稀有 = 一+二档 ×6；罕见 = 二+三档 ×6；史诗 = 二三四档 ×6；传奇 = 二三四档 ×8（超级）。
+     */
+    private static final int[][] LOTTERY_TIERS = {{0, 1}, {1, 2}, {1, 2, 3}, {1, 2, 3}};
+    private static final int[] LOTTERY_COUNTS = {6, 6, 6, 8};
+    private static final int[] LOTTERY_TYPES = {
+        LootRollPayload.TYPE_RESOURCE, LootRollPayload.TYPE_RESOURCE,
+        LootRollPayload.TYPE_RESOURCE, LootRollPayload.TYPE_SUPER
+    };
+
     /** 猎人游戏的逃脱窗口期（猎人被定身、全员热身）——期间暂停刷新光柱。 */
     static boolean inEscapeWindow() {
         return ManhuntGame.phase() == ManhuntGame.Phase.ESCAPE;
     }
 
     /**
-     * 触发一次指定档位（0~3）的资源抽奖：从对应档位奖池抽取
-     * {@code GameConfig.ROLL_ITEMS} 种物品，走 Manhunt 的待领取流程
-     * （客户端播放老虎机动画，上下方向键领取）。
+     * 按光柱稀有度触发一次资源抽奖：合并对应档位奖池后抽取指定件数，
+     * 抽奖 UI 边框/品级色使用光柱自身的颜色（ARGB）。
      */
-    static boolean rollLottery(ServerPlayer player, int tier) {
-        var pool = RewardPools.pool(Math.max(0, Math.min(3, tier)));
+    static boolean rollLottery(ServerPlayer player, int rarityOrdinal, int accentColor) {
+        int idx = Math.floorMod(rarityOrdinal, LOTTERY_TIERS.length);
+        List<RewardPools.Entry> pool = new ArrayList<>();
+        for (int tier : LOTTERY_TIERS[idx]) {
+            pool.addAll(RewardPools.pool(tier));
+        }
         if (pool.isEmpty()) {
             return false;
         }
-        List<ItemStack> items = new ArrayList<>(GameConfig.ROLL_ITEMS);
-        for (int i = 0; i < GameConfig.ROLL_ITEMS; i++) {
+        int count = LOTTERY_COUNTS[idx];
+        List<ItemStack> items = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
             items.add(RewardPools.weightedPick(pool).roll(player.registryAccess()));
         }
-        PendingRewardManager.start(player, LootRollPayload.TYPE_RESOURCE, items);
+        int type = LOTTERY_TYPES[idx];
+        try {
+            PendingRewardManager.start(player, type, items, accentColor);
+        } catch (NoSuchMethodError fallback) {
+            // 旧版 Manhunt（无强调色重载）：退回默认边框色
+            PendingRewardManager.start(player, type, items);
+        }
         return true;
     }
 }

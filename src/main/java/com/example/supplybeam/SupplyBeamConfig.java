@@ -124,8 +124,8 @@ public final class SupplyBeamConfig {
         builder.pop();
 
         builder.comment("稀有度：刷新权重与光柱颜色（罕见/稀有/史诗/传奇；安装 Manhunt 时对应其四档奖池）").push("rarity");
-        WEIGHT_UNCOMMON = builder.comment("罕见补给（绿）刷新权重").defineInRange("weightUncommon", 46, 0, 10000);
-        WEIGHT_RARE = builder.comment("稀有补给（蓝）刷新权重").defineInRange("weightRare", 27, 0, 10000);
+        WEIGHT_UNCOMMON = builder.comment("罕见补给（绿）刷新权重").defineInRange("weightUncommon", 27, 0, 10000);
+        WEIGHT_RARE = builder.comment("稀有补给（蓝）刷新权重").defineInRange("weightRare", 46, 0, 10000);
         WEIGHT_EPIC = builder.comment("史诗补给（紫）刷新权重").defineInRange("weightEpic", 18, 0, 10000);
         WEIGHT_LEGENDARY = builder.comment("传奇补给（红）刷新权重").defineInRange("weightLegendary", 9, 0, 10000);
         COLOR_UNCOMMON = builder.comment("罕见补给光柱颜色（#RRGGBB）").define("colorUncommon", "#3AE86B");
@@ -156,12 +156,12 @@ public final class SupplyBeamConfig {
         entry("beam.beamGrowthSeconds", BEAM_GROWTH_SECONDS, ValueType.INT, 1, 600);
         entry("crate.descendSpeedBlocksPerSecond", DESCEND_SPEED_BLOCKS_PER_SECOND, ValueType.DOUBLE, 0.05, 20.0);
         entry("crate.groundLifetimeSeconds", GROUND_LIFETIME_SECONDS, ValueType.INT, 10, 86400);
-        entry("rarity.weightUncommon", WEIGHT_UNCOMMON, ValueType.INT, 0, 10000);
         entry("rarity.weightRare", WEIGHT_RARE, ValueType.INT, 0, 10000);
+        entry("rarity.weightUncommon", WEIGHT_UNCOMMON, ValueType.INT, 0, 10000);
         entry("rarity.weightEpic", WEIGHT_EPIC, ValueType.INT, 0, 10000);
         entry("rarity.weightLegendary", WEIGHT_LEGENDARY, ValueType.INT, 0, 10000);
-        entry("rarity.colorUncommon", COLOR_UNCOMMON, ValueType.COLOR, 0, 0);
         entry("rarity.colorRare", COLOR_RARE, ValueType.COLOR, 0, 0);
+        entry("rarity.colorUncommon", COLOR_UNCOMMON, ValueType.COLOR, 0, 0);
         entry("rarity.colorEpic", COLOR_EPIC, ValueType.COLOR, 0, 0);
         entry("rarity.colorLegendary", COLOR_LEGENDARY, ValueType.COLOR, 0, 0);
         entry("debug.debugMode", DEBUG_MODE, ValueType.BOOLEAN, 0, 0);

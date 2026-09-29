@@ -28,14 +28,17 @@ public final class ManhuntBridge {
     }
 
     /**
-     * 触发一次指定档位（0~3）的 Manhunt 资源抽奖。
+     * 按光柱稀有度触发一次资源抽奖（四档稀有度各有奖池组合/件数配方，
+     * 抽奖 UI 边框色 = 光柱自身颜色）。
+     * @param rarityOrdinal SupplyRarity 的 ordinal
+     * @param accentColor   抽奖 UI 强调色（ARGB，含 alpha）
      * @return true = 已开启抽奖流程；false = 联动不可用或奖池为空
      */
-    public static boolean rollLottery(ServerPlayer player, int tier) {
+    public static boolean rollLottery(ServerPlayer player, int rarityOrdinal, int accentColor) {
         if (!LOADED) {
             return false;
         }
-        return ManhuntHook.rollLottery(player, tier);
+        return ManhuntHook.rollLottery(player, rarityOrdinal, accentColor);
     }
 
     /** 是否应暂停生成（true = 本周期跳过）。 */

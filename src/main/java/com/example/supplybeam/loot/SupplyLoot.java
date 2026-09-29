@@ -69,8 +69,8 @@ public final class SupplyLoot {
         }
     }
 
-    // ==================== 罕见补给（绿，档1）：生存基础物资 ====================
-    private static final List<Entry> UNCOMMON_POOL = List.of(
+    // ==================== 稀有补给（蓝，档0）：生存基础物资 ====================
+    private static final List<Entry> TIER_POOL_0 = List.of(
         new Simple(Items.BREAD, 2, 4, 6), new Simple(Items.COOKED_BEEF, 2, 3, 5),
         new Simple(Items.BAKED_POTATO, 3, 6, 3), new Simple(Items.TORCH, 8, 16, 5),
         new Simple(Items.IRON_INGOT, 2, 4, 5), new Simple(Items.COAL, 4, 8, 4),
@@ -80,8 +80,8 @@ public final class SupplyLoot {
         new Simple(Items.IRON_AXE, 1, 1, 1), new Simple(Items.CAMPFIRE, 1, 1, 1)
     );
 
-    // ==================== 稀有补给（蓝，档2）：成型的装备与资源 ====================
-    private static final List<Entry> RARE_POOL = List.of(
+    // ==================== 罕见补给（绿，档1）：成型的装备与资源 ====================
+    private static final List<Entry> TIER_POOL_1 = List.of(
         new Simple(Items.GOLD_INGOT, 2, 5, 5), new Simple(Items.ARROW, 16, 32, 3),
         new Simple(Items.IRON_CHESTPLATE, 1, 1, 2), new Simple(Items.IRON_HELMET, 1, 1, 2),
         new Simple(Items.IRON_LEGGINGS, 1, 1, 2), new Simple(Items.IRON_BOOTS, 1, 1, 2),
@@ -93,8 +93,8 @@ public final class SupplyLoot {
         new Book(1, 2)
     );
 
-    // ==================== 史诗补给（紫，档3）：钻石级跃迁 ====================
-    private static final List<Entry> EPIC_POOL = List.of(
+    // ==================== 史诗补给（紫，档2）：钻石级跃迁 ====================
+    private static final List<Entry> TIER_POOL_2 = List.of(
         new Simple(Items.DIAMOND, 1, 3, 5), new Simple(Items.GOLDEN_APPLE, 1, 2, 4),
         new Simple(Items.ENDER_PEARL, 2, 4, 3), new Simple(Items.EMERALD, 2, 5, 3),
         new Simple(Items.GOLD_BLOCK, 1, 2, 2), new Simple(Items.NAME_TAG, 1, 1, 2),
@@ -104,8 +104,8 @@ public final class SupplyLoot {
         new Book(3, 3)
     );
 
-    // ==================== 传奇补给（红，档4）：下界合金与毕业物资 ====================
-    private static final List<Entry> LEGENDARY_POOL = List.of(
+    // ==================== 传奇补给（红，档3）：下界合金与毕业物资 ====================
+    private static final List<Entry> TIER_POOL_3 = List.of(
         new Simple(Items.NETHERITE_SCRAP, 1, 2, 3), new Simple(Items.NETHERITE_INGOT, 1, 1, 1),
         new Simple(Items.ENCHANTED_GOLDEN_APPLE, 1, 1, 2), new Simple(Items.TOTEM_OF_UNDYING, 1, 1, 2),
         new Simple(Items.DIAMOND_BLOCK, 1, 2, 2), new Simple(Items.TRIDENT, 1, 1, 1),
@@ -122,7 +122,7 @@ public final class SupplyLoot {
     );
 
     private static final List<List<Entry>> POOLS = List.of(
-        UNCOMMON_POOL, RARE_POOL, EPIC_POOL, LEGENDARY_POOL);
+        TIER_POOL_0, TIER_POOL_1, TIER_POOL_2, TIER_POOL_3);
 
     /** 按稀有度开箱：条数由 {@link SupplyRarity#rolls()} 决定。 */
     public static List<ItemStack> rollLoot(SupplyRarity rarity, HolderLookup.Provider registries) {

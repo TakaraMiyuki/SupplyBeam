@@ -4,14 +4,14 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.util.RandomSource;
 
 /**
- * 补给稀有度，四档：罕见（绿）→ 稀有（蓝）→ 史诗（紫）→ 传奇（红）。
+ * 补给稀有度，四档（由低到高）：稀有（蓝）→ 罕见（绿）→ 史诗（紫）→ 传奇（红）。
  * 刷新权重与光柱颜色由配置文件控制（SupplyBeamConfig），此处保留
  * 默认颜色（配置解析失败时回退）、名称、着色与独立模式开箱条数。
- * 与 Manhunt 联动时，ordinal 正好对应其资源抽奖奖池档位（0~3）。
+ * 与 Manhunt 联动时按 ordinal 选择抽奖组合（见 ManhuntHook.LOTTERY_TIERS）。
  */
 public enum SupplyRarity {
-    UNCOMMON(0x3AE86B, ChatFormatting.GREEN, 4, "uncommon"),
-    RARE(0x3AB8FF, ChatFormatting.AQUA, 6, "rare"),
+    RARE(0x3AB8FF, ChatFormatting.AQUA, 4, "rare"),
+    UNCOMMON(0x3AE86B, ChatFormatting.GREEN, 6, "uncommon"),
     EPIC(0xB45BFF, ChatFormatting.LIGHT_PURPLE, 8, "epic"),
     LEGENDARY(0xFF4A5E, ChatFormatting.RED, 10, "legendary");
 
@@ -59,7 +59,7 @@ public enum SupplyRarity {
             total += Math.max(0, w);
         }
         if (total <= 0) {
-            return UNCOMMON;
+            return RARE;
         }
         int roll = random.nextInt(total);
         for (int i = 0; i < weights.length; i++) {

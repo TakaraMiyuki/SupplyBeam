@@ -298,8 +298,9 @@ public class SupplyCrateEntity extends Entity {
     }
 
     private void collect(ServerLevel server, ServerPlayer player) {
-        if (ManhuntBridge.lotteryAvailable() && ManhuntBridge.rollLottery(player, rarity().ordinal())) {
-            // Manhunt 联动：触发对应档位的资源抽奖（老虎机动画 + 待领取），不掉落实物
+        if (ManhuntBridge.lotteryAvailable()
+            && ManhuntBridge.rollLottery(player, rarity().ordinal(), 0xFF000000 | color())) {
+            // Manhunt 联动：按稀有度配方触发资源抽奖（边框色=光柱颜色），不掉落实物
         } else {
             // 独立模式：直接撒落自身奖池战利品
             List<ItemStack> loot = SupplyLoot.rollLoot(rarity(), server.registryAccess());
