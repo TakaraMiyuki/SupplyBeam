@@ -81,9 +81,9 @@
   "supplybeam.config.rarity.weightMythic.tooltip": "神话补给（金）刷新权重",
   "supplybeam.config.rarity.colorCommon": "颜色：常规（绿）",
   "supplybeam.config.rarity.colorCommon.tooltip": "常规补给光柱颜色（#RRGGBB），服务端修改全服生效",
-  "supplybeam.config.rarity.colorUncommon": "颜色：罕见（绿）",
+  "supplybeam.config.rarity.colorUncommon": "颜色：罕见（蓝）",
   "supplybeam.config.rarity.colorUncommon.tooltip": "罕见补给光柱颜色（#RRGGBB），服务端修改全服生效",
-  "supplybeam.config.rarity.colorRare": "颜色：稀有（蓝）",
+  "supplybeam.config.rarity.colorRare": "颜色：稀有（绿）",
   "supplybeam.config.rarity.colorRare.tooltip": "稀有补给光柱颜色（#RRGGBB），服务端修改全服生效",
   "supplybeam.config.rarity.colorEpic": "颜色：史诗（紫）",
   "supplybeam.config.rarity.colorEpic.tooltip": "史诗补给光柱颜色（#RRGGBB），服务端修改全服生效",
@@ -94,5 +94,9 @@
   "supplybeam.config.rarity.weightLegendary": "权重：传奇（红）",
   "supplybeam.config.rarity.weightLegendary.tooltip": "传奇补给（红）刷新权重",
   "supplybeam.config.rarity.colorLegendary": "颜色：传奇（红）",
-  "supplybeam.config.rarity.colorLegendary.tooltip": "传奇补给光柱颜色（#RRGGBB），服务端修改全服生效"
+  "supplybeam.config.rarity.colorLegendary.tooltip": "传奇补给光柱颜色（#RRGGBB），服务端修改全服生效",
+  "supplybeam.lottery.rare": "稀有资源抽奖",
+  "supplybeam.lottery.uncommon": "罕见资源抽奖",
+  "supplybeam.lottery.epic": "史诗资源抽奖",
+  "supplybeam.lottery.legendary": "传奇超级抽奖"
 }

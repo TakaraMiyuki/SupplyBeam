@@ -81,9 +81,9 @@
   "supplybeam.config.rarity.weightMythic.tooltip": "Spawn weight of the Mythic (gold) rarity",
   "supplybeam.config.rarity.colorCommon": "Color: Common (green)",
   "supplybeam.config.rarity.colorCommon.tooltip": "Beam color of the Common rarity (#RRGGBB); server value applies to everyone",
-  "supplybeam.config.rarity.colorUncommon": "Color: Uncommon (green)",
+  "supplybeam.config.rarity.colorUncommon": "Color: Uncommon (blue)",
   "supplybeam.config.rarity.colorUncommon.tooltip": "Beam color of the Uncommon rarity (#RRGGBB); server value applies to everyone",
-  "supplybeam.config.rarity.colorRare": "Color: Rare (blue)",
+  "supplybeam.config.rarity.colorRare": "Color: Rare (green)",
   "supplybeam.config.rarity.colorRare.tooltip": "Beam color of the Rare rarity (#RRGGBB); server value applies to everyone",
   "supplybeam.config.rarity.colorEpic": "Color: Epic (purple)",
   "supplybeam.config.rarity.colorEpic.tooltip": "Beam color of the Epic rarity (#RRGGBB); server value applies to everyone",
@@ -94,5 +94,9 @@
   "supplybeam.config.rarity.weightLegendary": "Weight: Legendary (red)",
   "supplybeam.config.rarity.weightLegendary.tooltip": "Spawn weight of the Legendary (red) rarity",
   "supplybeam.config.rarity.colorLegendary": "Color: Legendary (red)",
-  "supplybeam.config.rarity.colorLegendary.tooltip": "Beam color of the Legendary rarity (#RRGGBB); server value applies to everyone"
+  "supplybeam.config.rarity.colorLegendary.tooltip": "Beam color of the Legendary rarity (#RRGGBB); server value applies to everyone",
+  "supplybeam.lottery.rare": "Rare Supply Draw",
+  "supplybeam.lottery.uncommon": "Uncommon Supply Draw",
+  "supplybeam.lottery.epic": "Epic Supply Draw",
+  "supplybeam.lottery.legendary": "Legendary Super Draw"
 }

@@ -13,7 +13,7 @@ base {
 
 dependencies {
     // Manhunt 联动（可选依赖）：编译期引用其 jar，运行期未安装时全部联动逻辑自动跳过
-    compileOnly files("${rootDir}/../Manhunt/build/libs/manhunt-0.2.2-beta.jar")
+    compileOnly files("${rootDir}/../Manhunt/build/libs/manhunt-0.2.3-beta.jar")
 }
 
 neoForge {

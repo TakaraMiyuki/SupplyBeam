@@ -128,8 +128,8 @@ public final class SupplyBeamConfig {
         WEIGHT_RARE = builder.comment("稀有补给（蓝）刷新权重").defineInRange("weightRare", 46, 0, 10000);
         WEIGHT_EPIC = builder.comment("史诗补给（紫）刷新权重").defineInRange("weightEpic", 18, 0, 10000);
         WEIGHT_LEGENDARY = builder.comment("传奇补给（红）刷新权重").defineInRange("weightLegendary", 9, 0, 10000);
-        COLOR_UNCOMMON = builder.comment("罕见补给光柱颜色（#RRGGBB）").define("colorUncommon", "#3AE86B");
-        COLOR_RARE = builder.comment("稀有补给光柱颜色（#RRGGBB）").define("colorRare", "#3AB8FF");
+        COLOR_UNCOMMON = builder.comment("罕见补给光柱颜色（#RRGGBB）").define("colorUncommon", "#3AB8FF");
+        COLOR_RARE = builder.comment("稀有补给光柱颜色（#RRGGBB）").define("colorRare", "#3AE86B");
         COLOR_EPIC = builder.comment("史诗补给光柱颜色（#RRGGBB）").define("colorEpic", "#B45BFF");
         COLOR_LEGENDARY = builder.comment("传奇补给光柱颜色（#RRGGBB）").define("colorLegendary", "#FF4A5E");
         builder.pop();

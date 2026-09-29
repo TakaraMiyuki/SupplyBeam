@@ -1,0 +1,8 @@
+{
+  "tag_name": "v0.2.2-beta",
+  "target_commitish": "main",
+  "name": "猎人游戏 Manhunt v0.2.2-beta",
+  "body": "小版本更新（Minecraft Java 26.2 · NeoForge 26.2）。\n\n## 新增\n- 抽奖强调色支持：`PendingRewardManager.start` 新增四参重载（player, type, items, accentColor），\n  抽奖 UI 边框/品级色可由附属模组指定（如补给光柱按自身光柱颜色定制），\n  强调色随待领取奖励全程保持（延迟重开亦然）；三参版本行为不变，完全向后兼容。\n\n## 配套\n- 补给光柱 Supply Beam 0.4.1-beta 的四种抽奖配方依赖本版本的强调色重载。",
+  "draft": false,
+  "prerelease": true
+}

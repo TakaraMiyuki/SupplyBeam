@@ -18,14 +18,17 @@ final class ManhuntHook {
     private ManhuntHook() {}
 
     /**
-     * 四档稀有度对应的抽奖配方：{奖池档位组合, 件数, 抽奖类型}。
-     * 稀有 = 一+二档 ×6；罕见 = 二+三档 ×6；史诗 = 二三四档 ×6；传奇 = 二三四档 ×8（超级）。
+     * 四档稀有度对应的抽奖配方：{奖池档位组合, 件数, 标题翻译键}。
+     * 稀有 = 一+二档 ×6；罕见 = 二+三档 ×6；史诗 = 二三四档 ×6；传奇 = 二三四档 ×8。
+     * 四种抽奖全部走超级抽奖类型——获得与超级抽奖一致的排队保护
+     * （永不覆盖：补给抽奖开启时，新的普通抽奖顺延暂留；补给抽奖也会顶替进行中的普通抽奖）。
+     * UI 标题使用各自翻译键，边框/品级色使用光柱自身颜色。
      */
     private static final int[][] LOTTERY_TIERS = {{0, 1}, {1, 2}, {1, 2, 3}, {1, 2, 3}};
     private static final int[] LOTTERY_COUNTS = {6, 6, 6, 8};
-    private static final int[] LOTTERY_TYPES = {
-        LootRollPayload.TYPE_RESOURCE, LootRollPayload.TYPE_RESOURCE,
-        LootRollPayload.TYPE_RESOURCE, LootRollPayload.TYPE_SUPER
+    private static final String[] LOTTERY_TITLES = {
+        "supplybeam.lottery.rare", "supplybeam.lottery.uncommon",
+        "supplybeam.lottery.epic", "supplybeam.lottery.legendary"
     };
 
     /** 猎人游戏的逃脱窗口期（猎人被定身、全员热身）——期间暂停刷新光柱。 */
@@ -51,12 +54,16 @@ final class ManhuntHook {
         for (int i = 0; i < count; i++) {
             items.add(RewardPools.weightedPick(pool).roll(player.registryAccess()));
         }
-        int type = LOTTERY_TYPES[idx];
+        String title = LOTTERY_TITLES[idx];
         try {
-            PendingRewardManager.start(player, type, items, accentColor);
-        } catch (NoSuchMethodError fallback) {
-            // 旧版 Manhunt（无强调色重载）：退回默认边框色
-            PendingRewardManager.start(player, type, items);
+            PendingRewardManager.start(player, LootRollPayload.TYPE_SUPER, items, accentColor, title);
+        } catch (NoSuchMethodError noTitle) {
+            try {
+                PendingRewardManager.start(player, LootRollPayload.TYPE_SUPER, items, accentColor);
+            } catch (NoSuchMethodError noAccent) {
+                // 旧版 Manhunt：退回默认边框色与标题
+                PendingRewardManager.start(player, LootRollPayload.TYPE_SUPER, items);
+            }
         }
         return true;
     }
